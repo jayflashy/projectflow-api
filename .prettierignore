@@ -52,4 +52,5 @@ postcss.config.js
 README.md
 tailwind.config.ts
 tsconfig.json
+jest.config.ts
 pnpm-lock.yaml  
