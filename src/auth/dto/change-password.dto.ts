@@ -11,10 +11,11 @@ export class ChangePasswordDto {
   oldPassword: string;
 
   @ApiProperty({
-    example: 'newStrongPassword123',
-    description: 'The new password (min 6 characters)',
+    example: 'newStrongPassword123!',
+    description:
+      'The new password (min 8 characters, must include uppercase, lowercase, number, and special character)',
   })
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
   newPassword: string;
 }

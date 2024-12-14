@@ -11,8 +11,8 @@ import { PrismaModule } from './prisma/prisma.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    AuthModule,
     HealthModule,
+    AuthModule,
     PrismaModule,
   ],
   controllers: [AppController],
