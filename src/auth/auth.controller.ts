@@ -24,6 +24,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { AuthGuard } from './guards/auth.guard';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -85,6 +86,22 @@ export class AuthController {
     @Body(ValidationPipe) changePasswordDto: ChangePasswordDto,
   ): Promise<ChangePasswordResponseDto> {
     return this.authService.changePassword(userId, changePasswordDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @Patch('profile')
+  @ApiOperation({ summary: 'Update logged-in user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile updated successfully.',
+    type: UserResponseDto,
+  })
+  updateProfile(
+    @AuthUser('id') userId: string,
+    @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
+  ): Promise<Omit<User, 'password'>> {
+    return this.authService.updateProfile(userId, updateProfileDto);
   }
 
   @Post('refresh')

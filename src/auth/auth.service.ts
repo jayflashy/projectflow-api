@@ -5,13 +5,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role, User } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,7 +30,7 @@ export class AuthService {
           email,
           password: hashedPassword,
           name,
-          role: Role.ADMIN,
+          role: Role.USER,
         },
       });
 
@@ -98,6 +99,17 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
     return user;
+  }
+
+  async updateProfile(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<Omit<User, 'password'>> {
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateProfileDto,
+    });
+    return updatedUser;
   }
 
   async refreshToken(token: string) {
