@@ -5,13 +5,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { plainToClass } from 'class-transformer';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { ChangePasswordResponseDto } from './dto/change-password-response.dto';
-import { UserResponseDto } from './dto/user-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -22,7 +19,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+  async register(registerDto: RegisterDto) {
     const { email, password, name } = registerDto;
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -32,6 +29,7 @@ export class AuthService {
           email,
           password: hashedPassword,
           name,
+          role: Role.ADMIN,
         },
       });
 
@@ -39,15 +37,11 @@ export class AuthService {
       const accessToken = this.jwtService.sign(payload); // 24h expiration
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' }); // 7 days
 
-      const userResponse = plainToClass(UserResponseDto, user, {
-        excludeExtraneousValues: true,
-      });
-      const response = plainToClass(
-        AuthResponseDto,
-        { user: userResponse, accessToken, refreshToken },
-        { excludeExtraneousValues: true },
-      );
-      return response;
+      return {
+        user,
+        accessToken,
+        refreshToken,
+      };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -66,24 +60,16 @@ export class AuthService {
       const payload = { sub: user.id, email: user.email, role: user.role };
       const accessToken = this.jwtService.sign(payload); // 24h expiration
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' }); // 7 days
-
-      const userResponse = plainToClass(UserResponseDto, user, {
-        excludeExtraneousValues: true,
-      });
-      const response = plainToClass(
-        AuthResponseDto,
-        { user: userResponse, accessToken, refreshToken },
-        { excludeExtraneousValues: true },
-      );
-      return response;
+      return {
+        user,
+        accessToken,
+        refreshToken,
+      };
     }
     throw new UnauthorizedException('Please check your login credentials');
   }
 
-  async changePassword(
-    userId: string,
-    changePasswordDto: ChangePasswordDto,
-  ): Promise<ChangePasswordResponseDto> {
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const { oldPassword, newPassword } = changePasswordDto;
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
@@ -101,12 +87,20 @@ export class AuthService {
       where: { id: userId },
       data: { password: hashedNewPassword },
     });
-    return plainToClass(ChangePasswordResponseDto, {
+    return {
       message: 'Password changed successfully',
-    });
+    };
   }
 
-  async refreshToken(token: string): Promise<AuthResponseDto> {
+  async getProfile(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return user;
+  }
+
+  async refreshToken(token: string) {
     try {
       const payload = this.jwtService.verify(token);
       const user = await this.prisma.user.findUnique({
@@ -123,19 +117,11 @@ export class AuthService {
         expiresIn: '7d',
       });
 
-      const userResponse = plainToClass(UserResponseDto, user, {
-        excludeExtraneousValues: true,
-      });
-      const response = plainToClass(
-        AuthResponseDto,
-        {
-          user: userResponse,
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
-        },
-        { excludeExtraneousValues: true },
-      );
-      return response;
+      return {
+        user,
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
     } catch (error) {
       console.log(error);
       throw new UnauthorizedException('Invalid refresh token');

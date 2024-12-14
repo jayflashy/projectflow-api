@@ -13,7 +13,6 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { plainToClass } from 'class-transformer';
 import { User } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { AuthUser } from './decorators/user.decorator';
@@ -68,10 +67,8 @@ export class AuthController {
     description: 'User profile.',
     type: UserResponseDto,
   })
-  getProfile(@AuthUser() user: Omit<User, 'password'>): UserResponseDto {
-    return plainToClass(UserResponseDto, user, {
-      excludeExtraneousValues: true,
-    });
+  getProfile(@AuthUser() user: Omit<User, 'password'>) {
+    return this.authService.getProfile(user.id);
   }
 
   @UseGuards(AuthGuard)

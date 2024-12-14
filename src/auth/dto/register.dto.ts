@@ -13,7 +13,7 @@ export class RegisterDto {
   email: string;
 
   @ApiProperty({
-    example: 'StrongPass123!',
+    example: 'Password123!',
     description:
       'User password (min 8 characters, must include uppercase, lowercase, number, and special character)',
   })
