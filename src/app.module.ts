@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProjectsModule } from './projects/projects.module';
 import { CategoriesModule } from './categories/categories.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   controllers: [AppController],
@@ -19,6 +20,7 @@ import { CategoriesModule } from './categories/categories.module';
     PrismaModule,
     ProjectsModule,
     CategoriesModule,
+    TasksModule,
   ],
   providers: [AppService],
 })
